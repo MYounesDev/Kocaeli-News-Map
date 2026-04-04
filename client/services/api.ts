@@ -8,7 +8,7 @@ import type {
   NewsFilters,
 } from '@/types/api';
 
-const API_BASE_URL = 'https://kocaeli-news-map.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ─── Generic Helpers ───
 
