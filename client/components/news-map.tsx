@@ -197,17 +197,57 @@ export default function NewsMap({ articles, onMarkerClick, selectedArticleId, ap
       return;
     }
 
-    // Script tag already in DOM — wait for it to finish loading
+    // Script tag already in DOM — wait for it to finish loading or check periodically
     const existing = document.getElementById('google-maps-script') as HTMLScriptElement | null;
     if (existing) {
-      const onLoad = () => {
-        console.log("✅ Google Maps script loaded from existing tag");
+      console.log("✅ Google Maps script tag found, waiting for API to load...");
+      
+      // Check if window.google is already available (script already executed)
+      if (window.google?.maps?.Map) {
+        console.log("✅ Google Maps API available immediately");
         initMap();
+        return;
+      }
+
+      // If not immediately available, set up listeners and retry with polling
+      let retries = 0;
+      const maxRetries = 50; // 5 seconds with 100ms intervals
+
+      const checkAPI = () => {
+        if (window.google?.maps?.Map) {
+          console.log("✅ Google Maps API loaded from existing tag");
+          initMap();
+          return true;
+        }
+        return false;
       };
-      const onError = () => console.error("❌ Google Maps script failed to load from existing tag");
+
+      const pollInterval = setInterval(() => {
+        retries++;
+        if (checkAPI() || retries >= maxRetries) {
+          clearInterval(pollInterval);
+          if (retries >= maxRetries && !window.google?.maps?.Map) {
+            console.error("❌ Google Maps API did not load after waiting");
+          }
+        }
+      }, 100);
+
+      const onLoad = () => {
+        clearInterval(pollInterval);
+        console.log("✅ Google Maps script 'load' event fired");
+        setTimeout(() => checkAPI(), 100); // Give it time to initialize
+      };
+
+      const onError = () => {
+        clearInterval(pollInterval);
+        console.error("❌ Google Maps script failed to load from existing tag");
+      };
+
       existing.addEventListener('load', onLoad);
       existing.addEventListener('error', onError);
+
       return () => {
+        clearInterval(pollInterval);
         existing.removeEventListener('load', onLoad);
         existing.removeEventListener('error', onError);
       };
@@ -233,8 +273,17 @@ export default function NewsMap({ articles, onMarkerClick, selectedArticleId, ap
     
     const onLoad = () => {
       console.log("✅ Google Maps script loaded successfully");
-      initMap();
+      // Give the script time to fully initialize
+      setTimeout(() => {
+        if (window.google?.maps?.Map) {
+          initMap();
+        } else {
+          console.warn("⚠️  Script loaded but window.google not yet available, retrying...");
+          setTimeout(initMap, 500);
+        }
+      }, 100);
     };
+
     const onError = () => {
       console.error("❌ Failed to load Google Maps script. Check:\n1. API key validity\n2. Maps JavaScript API enabled in Google Cloud");
     };
