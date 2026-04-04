@@ -1,3 +1,11 @@
+# ──────────────────────────────────────────────
+# Requirements for Vercel Serverless Deployment
+# ──────────────────────────────────────────────
+# NOTE: sentence-transformers, scikit-learn, and torch are excluded
+# because they far exceed Vercel's 250 MB function size limit.
+# The scraper endpoints will return an error if invoked on Vercel.
+# Run scraping from a local machine or a dedicated server instead.
+
 # FastAPI & Server
 fastapi==0.115.12
 uvicorn[standard]==0.34.2
@@ -21,10 +29,6 @@ lxml==5.3.1
 
 # Date Parsing
 python-dateutil==2.9.0.post0
-
-# NLP - Embeddings for Duplicate Detection
-sentence-transformers==4.1.0
-scikit-learn==1.6.1
 
 # CORS
 starlette==0.46.1

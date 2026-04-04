@@ -41,6 +41,11 @@ async def close_db() -> None:
     print("[OK] Disconnected from MongoDB")
 
 
+def is_connected() -> bool:
+    """Check if the database is currently connected."""
+    return _db is not None
+
+
 def get_db() -> AsyncIOMotorDatabase:
     """Get the database instance."""
     if _db is None:

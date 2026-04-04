@@ -282,6 +282,10 @@ async def trigger_scrape(request: ScrapeRequest, background_tasks: BackgroundTas
     Body:
     - days: Number of days to scrape (default 3)
     - sources: List of source names, or ["all"] for all sources
+
+    WARNING: On Vercel serverless, background tasks will be terminated when
+    the response is sent. Run scraping from a local machine or dedicated
+    server instead. The API read endpoints work fine on Vercel.
     """
     if _scrape_state["is_running"]:
         return ScrapeStatusResponse(

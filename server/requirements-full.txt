@@ -1,0 +1,38 @@
+# ──────────────────────────────────────────
+# Full requirements (local / dedicated server)
+# ──────────────────────────────────────────
+# Use this file when running locally or on a server
+# that can handle the heavy ML dependencies.
+#
+#   pip install -r requirements-full.txt
+
+# FastAPI & Server
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-multipart==0.0.20
+
+# MongoDB
+motor==3.7.1
+pymongo==4.12.1
+
+# Data Validation & Config
+pydantic==2.11.1
+pydantic-settings==2.8.1
+python-dotenv==1.1.0
+
+# HTTP Client
+httpx==0.28.1
+
+# HTML Parsing
+beautifulsoup4==4.13.3
+lxml==5.3.1
+
+# Date Parsing
+python-dateutil==2.9.0.post0
+
+# NLP - Embeddings for Duplicate Detection
+sentence-transformers==4.1.0
+scikit-learn==1.6.1
+
+# CORS
+starlette==0.46.1
