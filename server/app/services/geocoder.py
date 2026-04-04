@@ -42,11 +42,12 @@ async def geocode(location_text: str) -> Optional[dict]:
         dict with keys: lat, lng, formatted_address, or None if failed.
     """
     if not location_text:
+        logger.debug(f"geocode: Empty location_text provided")
         return None
 
     settings = get_settings()
     if not settings.GOOGLE_MAPS_API_KEY:
-        logger.warning("Google Maps API key not configured")
+        logger.error("⚠️  GOOGLE_MAPS_API_KEY not configured in .env - Geocoding will not work!")
         return None
 
     # 1. Check cache first
@@ -83,7 +84,13 @@ async def geocode(location_text: str) -> Optional[dict]:
         data = response.json()
 
         if data.get("status") != "OK" or not data.get("results"):
-            logger.warning(f"Geocoding failed for '{location_text}': {data.get('status')}")
+            error_msg = (
+                f"Geocoding failed for '{location_text}': {data.get('status')} "
+                f"(status={data.get('status')}, has_results={bool(data.get('results'))})"
+            )
+            logger.warning(f"⚠️  {error_msg}")
+            if data.get("status") == "ZERO_RESULTS":
+                logger.warning(f"   → Try a broader location like 'Kocaeli, Turkey'")
             return None
 
         result = data["results"][0]
@@ -111,5 +118,6 @@ async def geocode(location_text: str) -> Optional[dict]:
         return geocode_result
 
     except Exception as e:
-        logger.error(f"Geocoding error for '{location_text}': {e}")
+        logger.error(f"❌ Geocoding error for '{location_text}': {e}")
+        logger.error(f"   Ensure 'Geocoding API' is enabled in Google Cloud Console for this key")
         return None

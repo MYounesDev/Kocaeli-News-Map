@@ -5,6 +5,7 @@ Provides REST endpoints for querying, filtering, and retrieving news articles.
 """
 
 import math
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -13,6 +14,11 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.database import get_db
 from app.models.news import NewsArticleResponse, NewsListResponse, StatsResponse
+from app.services.geocoder import geocode
+from app.services.location import extract_location
+from app.config import get_settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/news", tags=["news"])
 
@@ -211,3 +217,106 @@ async def list_articles(
         limit=limit,
         total_pages=total_pages,
     )
+
+
+# ─── DIAGNOSTIC ENDPOINTS ───
+
+
+@router.get("/test-geocoding", tags=["diagnostics"])
+async def test_geocoding(location: str = Query(..., description="Location to geocode, e.g. 'Gebze, Kocaeli'")):
+    """
+    Test if geocoding is working.
+    
+    Use this to verify:
+    1. Google Maps API key is set
+    2. Geocoding API is enabled
+    3. Location extraction works
+    
+    Example: /api/news/test-geocoding?location=Gebze%2C%20Kocaeli
+    """
+    settings = get_settings()
+    
+    if not settings.GOOGLE_MAPS_API_KEY:
+        return {
+            "error": "GOOGLE_MAPS_API_KEY not configured in .env",
+            "status": "FAILED",
+            "suggestion": "Set GOOGLE_MAPS_API_KEY in server/.env"
+        }
+    
+    try:
+        result = await geocode(location)
+        
+        if result:
+            return {
+                "status": "SUCCESS",
+                "location": location,
+                "latitude": result["lat"],
+                "longitude": result["lng"],
+                "formatted_address": result.get("formatted_address", "")
+            }
+        else:
+            return {
+                "error": "Geocoding returned no results",
+                "status": "FAILED",
+                "suggestion": "Check if location is valid, or if Geocoding API is enabled in Google Cloud Console"
+            }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "FAILED",
+            "suggestion": "Check server logs for details"
+        }
+
+
+@router.get("/test-location-extraction", tags=["diagnostics"])
+async def test_location_extraction(text: str = Query(..., description="Text to extract location from")):
+    """
+    Test if location extraction is working.
+    
+    Example: /api/news/test-location-extraction?text=Incident%20happened%20in%20Gebze%20yesterday
+    """
+    try:
+        location = extract_location(text)
+        
+        if location:
+            return {
+                "status": "SUCCESS",
+                "input": text,
+                "extracted_location": location
+            }
+        else:
+            return {
+                "status": "NO_LOCATION_FOUND",
+                "input": text,
+                "suggestion": "Make sure text contains a known Kocaeli district or neighborhood"
+            }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "status": "FAILED"
+        }
+
+
+@router.get("/stats-location-data", tags=["diagnostics"])
+async def stats_location_data():
+    """
+    Check how many articles have location data.
+    
+    Helps diagnose if geocoding pipeline is working.
+    """
+    db = get_db()
+    collection = db["news"]
+    
+    total = await collection.count_documents({})
+    with_location_text = await collection.count_documents({"location_text": {"$ne": None}})
+    with_coords = await collection.count_documents({"latitude": {"$ne": None}, "longitude": {"$ne": None}})
+    without_coords = with_location_text - with_coords
+    
+    return {
+        "total_articles": total,
+        "with_location_text": with_location_text,
+        "with_latitude_longitude": with_coords,
+        "with_location_text_but_no_coords": without_coords,
+        "percentage_geocoded": f"{(with_coords / total * 100):.1f}%" if total > 0 else "N/A",
+        "status": "OK" if with_coords > 0 else "WARNING: No articles have coordinates"
+    }

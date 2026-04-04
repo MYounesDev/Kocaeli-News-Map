@@ -112,6 +112,22 @@ export default function NewsMap({ articles, onMarkerClick, selectedArticleId, ap
       (a) => a.latitude !== null && a.longitude !== null
     );
 
+    console.log(
+      `📍 Map articles: ${articlesRef.current.length} total, ` +
+      `${mappable.length} mappable (${((mappable.length / articlesRef.current.length) * 100).toFixed(1)}%)`
+    );
+
+    if (mappable.length === 0 && articlesRef.current.length > 0) {
+      console.warn(
+        "⚠️  No articles have location coordinates!\n" +
+        "Possible causes:\n" +
+        "1. Geocoding API key not configured on backend\n" +
+        "2. Location extraction failing (no location_text found)\n" +
+        "3. Geocoding API disabled in Google Cloud Console\n" +
+        "Use: GET /api/news/stats-location-data to check"
+      );
+    }
+
     mappable.forEach((article) => {
       const cfg = getCategoryConfig(article.category);
       const marker = new window.google.maps.Marker({
@@ -141,28 +157,42 @@ export default function NewsMap({ articles, onMarkerClick, selectedArticleId, ap
   // Initialize the map exactly once
   function initMap() {
     if (!mapRef.current || mapInstanceRef.current) return;
-    if (!window.google?.maps?.Map) return;
+    if (!window.google?.maps?.Map) {
+      console.error(
+        "❌ Google Maps API not loaded. Possible causes:\n" +
+        "1. NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not set in .env.local\n" +
+        "2. Maps JavaScript API not enabled in Google Cloud Console\n" +
+        "3. Invalid/blocked API key"
+      );
+      return;
+    }
 
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: KOCAELI_CENTER,
-      zoom: DEFAULT_ZOOM,
-      styles: DARK_STYLE,
-      zoomControl: true,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: true,
-      gestureHandling: 'greedy',
-    });
+    try {
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: KOCAELI_CENTER,
+        zoom: DEFAULT_ZOOM,
+        styles: DARK_STYLE,
+        zoomControl: true,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        gestureHandling: 'greedy',
+      });
 
-    mapInstanceRef.current = map;
-    mapReadyRef.current = true;
-    placeMarkers();
+      mapInstanceRef.current = map;
+      mapReadyRef.current = true;
+      console.log("✅ Google Maps initialized successfully");
+      placeMarkers();
+    } catch (error) {
+      console.error("❌ Error initializing Google Maps:", error);
+    }
   }
 
   // Load Google Maps script once on mount using loading=async (no callback)
   useEffect(() => {
     // Already bootstrapped — init immediately
     if (window.google?.maps?.Map) {
+      console.log("✅ Google Maps API already loaded");
       initMap();
       return;
     }
@@ -170,21 +200,53 @@ export default function NewsMap({ articles, onMarkerClick, selectedArticleId, ap
     // Script tag already in DOM — wait for it to finish loading
     const existing = document.getElementById('google-maps-script') as HTMLScriptElement | null;
     if (existing) {
-      existing.addEventListener('load', initMap);
-      return () => existing.removeEventListener('load', initMap);
+      const onLoad = () => {
+        console.log("✅ Google Maps script loaded from existing tag");
+        initMap();
+      };
+      const onError = () => console.error("❌ Google Maps script failed to load from existing tag");
+      existing.addEventListener('load', onLoad);
+      existing.addEventListener('error', onError);
+      return () => {
+        existing.removeEventListener('load', onLoad);
+        existing.removeEventListener('error', onError);
+      };
     }
 
     // First mount — inject script with loading=async and NO callback
     const key = apiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    
+    if (!key) {
+      console.error(
+        "❌ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is not set!\n" +
+        "Create .env.local with: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key"
+      );
+      return;
+    }
+
+    console.log("📡 Loading Google Maps script...");
     const script = document.createElement('script');
     script.id = 'google-maps-script';
     // loading=async is required by Google; we do NOT use &callback= with it
     script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&language=tr&region=TR&v=weekly`;
     script.async = true;
-    script.addEventListener('load', initMap);
+    
+    const onLoad = () => {
+      console.log("✅ Google Maps script loaded successfully");
+      initMap();
+    };
+    const onError = () => {
+      console.error("❌ Failed to load Google Maps script. Check:\n1. API key validity\n2. Maps JavaScript API enabled in Google Cloud");
+    };
+
+    script.addEventListener('load', onLoad);
+    script.addEventListener('error', onError);
     document.head.appendChild(script);
 
-    return () => script.removeEventListener('load', initMap);
+    return () => {
+      script.removeEventListener('load', onLoad);
+      script.removeEventListener('error', onError);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

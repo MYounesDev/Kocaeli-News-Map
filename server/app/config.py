@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = "kocaeli_news"
 
     # Google Maps
-    GOOGLE_MAPS_API_KEY: str = ""
+    GOOGLE_MAPS_API_KEY: str = "AIzaSyAbqoP2Nbw4xjnndc5mn2MyY-puRdNw0y8"
 
     # Scraping
     DEFAULT_SCRAPE_DAYS: int = 3
