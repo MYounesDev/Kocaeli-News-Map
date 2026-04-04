@@ -1,0 +1,136 @@
+# ──────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Cython debug
+cython_debug/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+
+# mypy / type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# ──────────────────────────────────────────────
+# Node.js / Next.js (Frontend)
+# ──────────────────────────────────────────────
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.turbo/
+package-lock.json
+yarn.lock
+
+# ──────────────────────────────────────────────
+# Environment & Secrets
+# ──────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# Keep the example template
+!.env.example
+
+# ──────────────────────────────────────────────
+# IDE & Editor
+# ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ──────────────────────────────────────────────
+# OS files
+# ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ──────────────────────────────────────────────
+# Docker
+# ──────────────────────────────────────────────
+docker-compose.override.yml
+
+# ──────────────────────────────────────────────
+# MongoDB (local data directory if used)
+# ──────────────────────────────────────────────
+mongo_data/
+data/db/
+
+# ──────────────────────────────────────────────
+# ML / Sentence Transformers model cache
+# ──────────────────────────────────────────────
+.cache/
+model_cache/
+*.bin
+*.safetensors
+# Keep requirements.txt tracked
+!requirements.txt
+
+# Hugging Face cache
+.huggingface/
+
+# ──────────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────────
+*.log
+logs/
+
+# ──────────────────────────────────────────────
+# Temp / Scratch
+# ──────────────────────────────────────────────
+temp/
+tmp/
+scratch/
+
+# ──────────────────────────────────────────────
+# Gemini / AI Agent Files
+# ──────────────────────────────────────────────
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/

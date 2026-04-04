@@ -1,0 +1,13 @@
+{
+  "name": "kocaeli-news-api-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Comprehensive API test suite for the Kocaeli News Map backend",
+  "scripts": {
+    "test": "node tests/api.test.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0"
+  }
+}
